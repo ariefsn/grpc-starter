@@ -1,0 +1,63 @@
+version: "3"
+
+services:
+  grpc-mongo:
+    image: mongo
+    container_name: grpc-mongo
+    mem_limit: 150m
+    restart: unless-stopped
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=Password.123
+      - MONGO_INITDB_DATABASE=grpc-cihui
+    # volumes:
+    #   - ${MONGO_VOLUME}:/data/db
+    # ports:
+    #   - ${MONGO_PORT}:27017
+    networks:
+      - grpc-network
+
+  envoy:
+    container_name: grpc-envoy
+    build:
+      context: "./envoy"
+    depends_on:
+      - grpc-server
+    ports:
+      - "8080:8080"
+      - "9901:9901"
+    networks:
+      - grpc-network
+
+  grpc-server:
+    container_name: grpc-server
+    build:
+      context: "./server"
+    environment:
+      - MONGO_HOST=grpc-mongo
+      - MONGO_PORT=27017
+      - MONGO_USER=root
+      - MONGO_PASSWORD=Password.123
+      - MONGO_DB=grpc
+    depends_on:
+      - grpc-mongo
+    ports:
+      - "6001:6001"
+    networks:
+      - grpc-network
+
+  grpc-client:
+    container_name: grpc-client
+    build:
+      context: "./client"
+    environment:
+      - VITE_API_URL=http://envoy:8080
+    depends_on:
+      - envoy
+    ports:
+      - "3000:80"
+    networks:
+      - grpc-network
+
+networks:
+  grpc-network:

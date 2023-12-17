@@ -1,0 +1,6 @@
+.env
+tmp/main
+__debug_bin*
+main
+cover.out
+coverage.html
